@@ -1,0 +1,42 @@
+module FA(input a, b, c_in, output c_out, s);
+//combinational
+    assign s = a^b^c_in;
+    assign c_out = a&b | a&c_in | b&c_in;
+endmodule
+
+
+module CLA_Logic (P, G, c_in, C, c_out);
+    input [3:0] P, G;
+    input c_in;
+    output [3:1] C;
+    output c_out;
+    
+    assign C[1]  = G[0] | (P[0] & c_in);
+    assign C[2]  = G[1] | (P[1] & G[0]) | (P[1] & P[0] & c_in);
+    assign C[3]  = G[2] | (P[2] & G[1]) | (P[2] & P[1] & G[0]) | (P[2] & P[1] & P[0] & c_in);
+    assign c_out = G[3] | (P[3] & G[2]) | (P[3] & P[2] & G[1]) | (P[3] & P[2] & P[1] & G[0]) | (P[3] & P[2] & P[1] & P[0] & c_in);
+endmodule
+
+// Top-Level 4-Bit Carry Lookahead Adder
+module CarryLookaheadAdder_4bit (a, b, c_in, s, c_out);
+    input [3:0] a, b;
+    input c_in;
+    output [3:0] s;
+    output c_out;
+    wire [3:0] P, G;
+    wire [3:1] C;
+
+    assign P = a ^ b;
+    assign G = a & b;
+
+    // Instantiate Carry Lookahead Unit
+    CLA_Logic cla_unit (.P(P), .G(G), .c_in(c_in), .C(C), .c_out(c_out));
+
+    // Instantiate 4 FA modules using the parallel carries from CLA_Logic
+    // Note: The individual c_out ports are left unconnected
+    FA fa0 (.a(a[0]), .b(b[0]), .c_in(c_in), .c_out(), .s(s[0]));
+    FA fa1 (.a(a[1]), .b(b[1]), .c_in(C[1]), .c_out(), .s(s[1]));
+    FA fa2 (.a(a[2]), .b(b[2]), .c_in(C[2]), .c_out(), .s(s[2]));
+    FA fa3 (.a(a[3]), .b(b[3]), .c_in(C[3]), .c_out(), .s(s[3]));
+
+endmodule
